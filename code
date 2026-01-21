@@ -1,0 +1,59 @@
+import pandas as pd
+import numpy as np
+from sklearn.linear_model import LinearRegression
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# 1. THE DATASET (2025 Releases)
+# Data compiled from trade reports for actors under 50
+data = {
+    'Actor': [
+        'Ranveer Singh', 'Vicky Kaushal', 'Ahaan Panday', 'Abhay Verma', 
+        'Tiger Shroff', 'Kartik Aaryan', 'Aditya Roy Kapur', 'Agastya Nanda', 
+        'Varun Dhawan', 'Shahid Kapoor', 'Siddhant Chaturvedi', 
+        'Ayushmann Khurrana', 'Rajkummar Rao', 'Emraan Hashmi', 'Ishaan Khatter'
+    ],
+    'Movie': [
+        'Dhurandhar', 'Chhaava', 'Saiyaara', 'Munjya', 
+        'Baaghi 4', 'Sunny Sanskari', 'Metro In Dino', 'Ikkis', 
+        'Baby John', 'Deva', 'Dhadak 2', 
+        'Thama', 'Maalik', 'Ground Zero', 'Homebound'
+    ],
+    'Fee_Cr': [40, 10, 0.2, 0.5, 20, 25, 5, 0.7, 25, 30, 3, 9, 6, 4, 1],
+    'Budget_Cr': [250, 110, 40, 30, 100, 80, 85, 60, 160, 120, 40, 60, 54, 40, 15],
+    'Actual_BoxOffice_Cr': [820, 600, 570, 107.5, 120, 65.2, 60, 45, 47, 50, 29, 20, 20, 7.5, 0.8]
+}
+
+df = pd.DataFrame(data)
+
+# 2. THE REGRESSION MODEL
+# We predict Box Office based on Investment (Fee + Budget)
+# Ideally, Investment should correlate with Returns.
+X = df[['Fee_Cr', 'Budget_Cr']]
+y = df['Actual_BoxOffice_Cr']
+
+model = LinearRegression()
+model.fit(X, y)
+
+# Generate Predictions based on the model
+df['Model_Predicted_BO'] = model.predict(X)
+
+# 3. CALCULATE IMPACT (RESIDUALS)
+# Residual = Actual Performance - Expected Performance
+# Positive = Underpaid (Overperformed) | Negative = Overpaid (Underperformed)
+df['Residual_Impact'] = df['Actual_BoxOffice_Cr'] - df['Model_Predicted_BO']
+
+# Sort by Impact for visualization
+df_sorted = df.sort_values('Residual_Impact', ascending=False)
+
+# 4. VIEW RESULTS
+print(df_sorted[['Actor', 'Movie', 'Fee_Cr', 'Actual_BoxOffice_Cr', 'Residual_Impact']])
+
+# 5. (OPTIONAL) VISUALIZATION
+plt.figure(figsize=(12, 8))
+colors = ['green' if x > 0 else 'red' for x in df_sorted['Residual_Impact']]
+sns.barplot(x='Residual_Impact', y='Actor', data=df_sorted, palette=colors)
+plt.axvline(0, color='black', linestyle='--')
+plt.title('Bollywood 2025: Actor Valuation (Residual Analysis)', fontsize=16)
+plt.xlabel('Impact (Actual Box Office - Model Predicted Box Office)', fontsize=12)
+plt.show()
